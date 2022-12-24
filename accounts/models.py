@@ -53,6 +53,7 @@ class User(AbstractBaseUser):
     banner_image = models.ImageField(
         upload_to=get_banner_filepath, null=True, blank=True
     )
+    is_verified = models.BooleanField(default=False)
 
     objects = UserManager()
     USERNAME_FIELD = "email"

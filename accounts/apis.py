@@ -1,14 +1,18 @@
+from django.contrib.auth import get_user_model
+from django.core.mail import EmailMultiAlternatives, get_connection
+from django.db.models import Q
+from rest_framework import decorators, exceptions, permissions
+from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.response import Response
-from rest_framework import exceptions
-from django.core.mail import EmailMultiAlternatives
-from django.core.mail import get_connection
-from rest_framework import decorators, exceptions
-from django.contrib.auth import get_user_model
-import django_filters
-from .serializers import LoginUserValidationSz, UserLoginSz
-from rest_framework.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
+
+from .serializers import (
+    LoginUserValidationSz,
+    RegisterUserValidationSz,
+    UserDetailSz,
+    UserLoginSz,
+)
 
 User = get_user_model()
 
@@ -59,7 +63,59 @@ def loginUserApi(request):
                 )
 
         return Response(UserLoginSz(instance=user).data)
+
+
+@decorators.api_view(["POST"])
+def registerUserApi(request):
+    sz = RegisterUserValidationSz(data=request.data)
+    if sz.is_valid(raise_exception=True):
+        email = sz.validated_data.get("email")
+        mobile = sz.validated_data.get("mobile")
+        password = sz.validated_data.pop("password")
+        user = User.objects.filter(Q(email=email) | Q(mobile=mobile))
+        if user.count() > 0:
+            return Response(
+                {"errors": ["User with email or mobile already exists."]},
+                status=HTTP_400_BAD_REQUEST,
+            )
+        user = User.objects.create(**request.data)
+        user.set_password(password)
+        user.save()
+        # TODO have to send OTP to the user email or mobile to verify the User
+        return Response(UserLoginSz(instance=user).data)
     else:
+        raise exceptions.ValidationError(
+            {"errors": ["Please Provide a valid information."]}
+        )
+
+
+@decorators.api_view(["GET", "POST"])
+@decorators.permission_classes([permissions.IsAuthenticated])
+def UserDetailApi(request):
+    user = request.user
+    if request.method == "GET":
+        sz = UserDetailSz(instance=user)
+        return Response(sz.data)
+    else:
+        # for password update
+        if "password" in request.data:
+            password = request.data.pop("password")
+            user.set_password(password)
+            user.save()
+        # for mobile update
+        if "mobile" in request.data:
+            mobile = request.data.get("mobile")
+            found_user = User.objects.filter(mobile=mobile).first()
+            if found_user is not None and found_user != user:
+                return Response(
+                    {"errors": ["Mobile number already exists."]},
+                    status=HTTP_400_BAD_REQUEST,
+                )
+        # for other detail update
+        sz = UserDetailSz(instance=user, data=request.data, partial=True)
+        if sz.is_valid(raise_exception=True):
+            sz.save()
+            return Response(sz.data)
         raise exceptions.ValidationError(
             {"errors": ["Please Provide a valid information."]}
         )

@@ -8,7 +8,7 @@ User = get_user_model()
 
 
 class LoginUserValidationSz(serializers.Serializer):
-    email = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
     mobile = PhoneNumberField(required=False)
     password = serializers.CharField(required=True)
 
@@ -32,6 +32,7 @@ class UserLoginSz(serializers.ModelSerializer):
             "is_staff",
             "is_manager",
             "is_superuser",
+            "is_verified",
             "tokens",
         )
 
@@ -39,3 +40,37 @@ class UserLoginSz(serializers.ModelSerializer):
         t = RefreshToken.for_user(user=obj)
         tokens = dict(access=str(t.access_token), refresh=str(t))
         return tokens
+
+
+class RegisterUserValidationSz(serializers.Serializer):
+    # Mobile is Optional
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    username = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+    mobile = PhoneNumberField(required=False)
+    password = serializers.CharField(required=True)
+
+
+class UserDetailSz(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "mobile",
+            "date_joined",
+            "last_login",
+            "is_active",
+            "is_admin",
+            "is_staff",
+            "is_manager",
+            "is_superuser",
+            "profile_image",
+            "banner_image",
+            "is_verified",
+        )
+        read_only_fields = ("email",)
