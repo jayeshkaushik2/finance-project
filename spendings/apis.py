@@ -8,13 +8,10 @@ from .serializers import SpendingSz
 
 class SpendingApi(viewsets.ModelViewSet):
     serializer_class = SpendingSz
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user is not None and self.request.user.is_authenticated:
-            return Spending.objects.filter(user=self.request.user)
-        return None
+        return Spending.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        if not self.request.user.is_authenticated:
-            raise exceptions.ValidationError("Your are not logged in.")
         return serializer.save(user=self.request.user)
