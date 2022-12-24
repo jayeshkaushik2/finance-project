@@ -10,7 +10,7 @@ class IncomeApi(viewsets.ModelViewSet):
     serializer_class = IncomeSz
 
     def get_queryset(self):
-        if self.request.user.is_authenticated:
+        if self.request.user is not None and self.request.user.is_authenticated:
             return Income.objects.filter(user=self.request.user)
         return None
 
