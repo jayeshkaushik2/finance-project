@@ -1,5 +1,7 @@
-from rest_framework import decorators, permissions
-from rest_framework import viewsets, exceptions
+from rest_framework import decorators, permissions, viewsets
+from rest_framework.response import Response
+from django.utils import timezone
+from datetime import timedelta
 
 # local imports
 from .models import Income
@@ -15,3 +17,14 @@ class IncomeApi(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         return serializer.save(user=self.request.user)
+
+
+@decorators.api_view(["GET"])
+@decorators.permission_classes([permissions.IsAuthenticated])
+def incomeReportApi(request, weeks):
+    user = request.user
+    current_date = timezone.now().date()
+    previous_date = timezone.now().date() - timedelta(weeks=int(weeks))
+    incomes = Income.objects.filter(user=user, created_at__date__gte=previous_date)
+    sz = IncomeSz(instance=incomes, many=True)
+    return Response(sz.data)

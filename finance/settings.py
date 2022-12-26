@@ -140,7 +140,7 @@ WSGI_APPLICATION = "finance.wsgi.application"
 DATABASES = {
     "default": config(
         "DATABASE_URL",
-        default="sqlite:///" + str(BASE_DIR.parent.joinpath("site.db")),
+        default="sqlite:///" + str(BASE_DIR.parent.joinpath("finance_site.db")),
         cast=db_url,
     )
 }
