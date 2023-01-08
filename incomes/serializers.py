@@ -9,7 +9,6 @@ class IncomeSz(serializers.ModelSerializer):
         model = Income
         fields = (
             "id",
-            "user",
             "source",
             "salary",
             "month",

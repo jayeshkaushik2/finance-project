@@ -1,4 +1,4 @@
-from rest_framework import decorators, permissions, viewsets
+from rest_framework import decorators, permissions, viewsets, exceptions
 from rest_framework.response import Response
 from django.utils import timezone
 from datetime import timedelta
@@ -7,14 +7,19 @@ from datetime import timedelta
 from .models import Income
 from .serializers import IncomeSz
 from django.db.models import Sum, F
+from common.customPagination import CustomPagination
 
 
 class IncomeApi(viewsets.ModelViewSet):
     serializer_class = IncomeSz
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = CustomPagination
 
     def get_queryset(self):
-        return Income.objects.filter(user=self.request.user)
+        return Income.objects.filter(user=self.request.user).order_by("-created_at")
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         return serializer.save(user=self.request.user)
@@ -47,6 +52,8 @@ def SummaryReportApi(request):
         user=user, created_at__date__month=current_month
     ).aggregate(Sum("spent_money"))
 
+    if current_month_incomes is None and current_month_spendings is None:
+        raise exceptions.NotFound({"errors": ["Data not found."]})
     data = dict(
         total_income=current_month_incomes["salary__sum"],
         total_spending=current_month_spendings["spent_money__sum"],
