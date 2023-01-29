@@ -94,7 +94,7 @@ def registerUserApi(request):
 def UserDetailApi(request):
     user = request.user
     if request.method == "GET":
-        sz = UserDetailSz(instance=user)
+        sz = UserDetailSz(instance=user, context=dict(request=request))
         return Response(sz.data)
     else:
         # for password update
@@ -112,7 +112,12 @@ def UserDetailApi(request):
                     status=HTTP_400_BAD_REQUEST,
                 )
         # for other detail update
-        sz = UserDetailSz(instance=user, data=request.data, partial=True)
+        sz = UserDetailSz(
+            instance=user,
+            data=request.data,
+            partial=True,
+            context=dict(request=request),
+        )
         if sz.is_valid(raise_exception=True):
             sz.save()
             return Response(sz.data)

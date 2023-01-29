@@ -3,6 +3,7 @@ from phonenumber_field.serializerfields import PhoneNumberField
 from django.contrib.auth import get_user_model
 from rest_framework import exceptions
 from rest_framework_simplejwt.tokens import RefreshToken
+from common.ImageBase64 import Base64ImageField
 
 User = get_user_model()
 
@@ -53,12 +54,8 @@ class RegisterUserValidationSz(serializers.Serializer):
 
 
 class UserDetailSz(serializers.ModelSerializer):
-    profile_image = serializers.ImageField(
-        max_length=None, use_url=True, allow_null=True, required=False
-    )
-    banner_image = serializers.ImageField(
-        max_length=None, use_url=True, allow_null=True, required=False
-    )
+    profile_image = Base64ImageField(max_length=None, use_url=True, required=False)
+    banner_image = Base64ImageField(max_length=None, use_url=True, required=False)
 
     class Meta:
         model = User
