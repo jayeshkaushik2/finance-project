@@ -52,7 +52,7 @@ def SummaryReportApi(request):
         user=user, created_at__date__month=current_month
     ).aggregate(Sum("spent_money"))
 
-    if current_month_incomes is None and current_month_spendings is None:
+    if current_month_incomes is None or current_month_spendings is None:
         raise exceptions.NotFound({"errors": ["Data not found."]})
     data = dict(
         total_income=current_month_incomes["salary__sum"],
