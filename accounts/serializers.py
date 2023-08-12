@@ -23,19 +23,36 @@ class LoginUserValidationSz(serializers.Serializer):
 
 class UserLoginSz(serializers.ModelSerializer):
     tokens = serializers.SerializerMethodField("get_token")
+    profile_image = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = (
             "id",
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "mobile",
+            "date_joined",
+            "last_login",
             "is_active",
             "is_admin",
             "is_staff",
             "is_manager",
             "is_superuser",
+            "profile_image",
+            "banner_image",
             "is_verified",
             "tokens",
         )
+
+    def get_profile_image(self, obj):
+        request = self.context.get("request")
+        if not obj.profile_image:
+            return ""
+        photo_url = obj.profile_image.url
+        return request.build_absolute_uri(photo_url)
 
     def get_token(self, obj):
         t = RefreshToken.for_user(user=obj)

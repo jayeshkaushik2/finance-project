@@ -62,7 +62,7 @@ def loginUserApi(request):
                     {"errors": ["Wrong password."]}, status=HTTP_400_BAD_REQUEST
                 )
 
-        return Response(UserLoginSz(instance=user).data)
+        return Response(UserLoginSz(instance=user, context={"request": request}).data)
 
 
 @decorators.api_view(["POST"])
@@ -82,7 +82,7 @@ def registerUserApi(request):
         user.set_password(password)
         user.save()
         # TODO have to send OTP to the user email or mobile to verify the User
-        return Response(UserLoginSz(instance=user).data)
+        return Response(UserLoginSz(instance=user, context={"request": request}).data)
     else:
         raise exceptions.ValidationError(
             {"errors": ["Please Provide a valid information."]}
