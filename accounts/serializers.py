@@ -62,12 +62,18 @@ class UserLoginSz(serializers.ModelSerializer):
 
 class RegisterUserValidationSz(serializers.Serializer):
     # Mobile is Optional
-    first_name = serializers.CharField(required=True)
-    last_name = serializers.CharField(required=True)
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
     username = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
     mobile = PhoneNumberField(required=False)
     password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        if attrs.get("password") != attrs.get("confirm_password"):
+            raise exceptions.ValidationError({"errors": "Passwords does not match."})
+        return super().validate(attrs)
 
 
 class UserDetailSz(serializers.ModelSerializer):

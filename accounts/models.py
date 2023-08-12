@@ -35,8 +35,8 @@ def get_banner_filepath(self, filename):
 
 
 class User(AbstractBaseUser):
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
+    first_name = models.CharField(max_length=50, blank=True, null=True)
+    last_name = models.CharField(max_length=50, blank=True, null=True)
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(verbose_name="email", max_length=50, unique=True)
     mobile = PhoneNumberField(blank=True)

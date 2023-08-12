@@ -72,13 +72,14 @@ def registerUserApi(request):
         email = sz.validated_data.get("email")
         mobile = sz.validated_data.get("mobile")
         password = sz.validated_data.pop("password")
+        sz.validated_data.pop("confirm_password")
         user = User.objects.filter(Q(email=email) | Q(mobile=mobile))
         if user.count() > 0:
             return Response(
                 {"errors": ["User with email or mobile already exists."]},
                 status=HTTP_400_BAD_REQUEST,
             )
-        user = User.objects.create(**request.data)
+        user = User.objects.create(**sz.validated_data)
         user.set_password(password)
         user.save()
         # TODO have to send OTP to the user email or mobile to verify the User

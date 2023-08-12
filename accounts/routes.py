@@ -9,7 +9,7 @@ urlpatterns = [
     path("token/", apis.MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("login/", apis.loginUserApi, name="login"),
-    path("register-user/", apis.registerUserApi, name="register_user"),
+    path("signup/", apis.registerUserApi, name="register_user"),
     path("user-details/", apis.UserDetailApi, name="user_details"),
 ]
 
