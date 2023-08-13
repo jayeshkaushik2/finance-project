@@ -1,17 +1,19 @@
 from django.contrib.auth import get_user_model
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.db.models import Q
-from rest_framework import decorators, exceptions, permissions
+from rest_framework import decorators, exceptions, permissions, status
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from .logics import send_email
 
 from .serializers import (
     LoginUserValidationSz,
     RegisterUserValidationSz,
     UserDetailSz,
     UserLoginSz,
+    VerifyOtpValidationSz,
 )
 
 User = get_user_model()
@@ -62,6 +64,8 @@ def loginUserApi(request):
                     {"errors": ["Wrong password."]}, status=HTTP_400_BAD_REQUEST
                 )
 
+        if not user.is_verified:
+            send_email(user, email_type="otp_verification")
         return Response(UserLoginSz(instance=user, context={"request": request}).data)
 
 
@@ -82,7 +86,7 @@ def registerUserApi(request):
         user = User.objects.create(**sz.validated_data)
         user.set_password(password)
         user.save()
-        # TODO have to send OTP to the user email or mobile to verify the User
+        send_email(user, email_type="otp_verification")
         return Response(UserLoginSz(instance=user, context={"request": request}).data)
     else:
         raise exceptions.ValidationError(
@@ -125,3 +129,36 @@ def UserDetailApi(request):
         raise exceptions.ValidationError(
             {"errors": ["Please Provide a valid information."]}
         )
+
+
+@decorators.api_view(["GET"])
+@decorators.permission_classes([permissions.IsAuthenticated])
+def resend_otp(request):
+    user = request.user
+    if user.is_verified:
+        return Response(
+            {"errors": ["Your Account is already verified."]},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    user.generate_otp()
+    send_email(user, email_type="otp_verification")
+    return Response({"success": True, "message": "OTP is Re-send to your email."})
+
+
+@decorators.api_view(["GET"])
+@decorators.permission_classes([permissions.IsAuthenticated])
+def verify_otp(request):
+    user = request.user
+    if user.is_verified:
+        return Response(
+            {"errors": ["Your Account is already verified."]},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    sz = VerifyOtpValidationSz(data=request.data)
+    if sz.is_valid(raise_exception=True):
+        check, msg = user.verify_otp(sz.validated_data.get("otp"))
+        if not check:
+            return Response({"errors": [msg]}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"success": True, "message": "Your Email is verified."})

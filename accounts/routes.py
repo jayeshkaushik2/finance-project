@@ -10,6 +10,8 @@ urlpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("login/", apis.loginUserApi, name="login"),
     path("signup/", apis.registerUserApi, name="register_user"),
+    path("resend-otp/", apis.resend_otp, name="resend_otp"),
+    path("verify-otp/", apis.verify_otp, name="verify_otp"),
     path("user-details/", apis.UserDetailApi, name="user_details"),
 ]
 

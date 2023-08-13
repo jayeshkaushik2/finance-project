@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+import random
+from django.utils import timezone
+from datetime import timedelta
 
 
 class UserManager(BaseUserManager):
@@ -54,6 +57,8 @@ class User(AbstractBaseUser):
         upload_to=get_banner_filepath, null=True, blank=True
     )
     is_verified = models.BooleanField(default=False)
+    otp = models.CharField(max_length=10, null=True, blank=True)
+    otp_validation_time = models.DateTimeField(null=True, blank=True)
 
     objects = UserManager()
     USERNAME_FIELD = "email"
@@ -79,3 +84,21 @@ class User(AbstractBaseUser):
 
     def get_full_name(self) -> str:
         return self.first_name + " " + self.last_name
+
+    def generate_otp(self) -> str:
+        otp = str(random.randint(10000, 99999))
+        self.otp = otp
+        self.otp_validation_time = timezone.now() + timedelta(minutes=20)
+        self.save()
+        return otp
+
+    def verify_otp(self, otp) -> tuple:
+        if not self.otp_validation_time or not self.otp:
+            return False, "OTP is not generated."
+
+        if timezone.now() > self.otp_validation_time or otp != self.otp:
+            return False, "Either OTP is Invalid or it is expired."
+
+        self.is_verified = True
+        self.save()
+        return True, ""

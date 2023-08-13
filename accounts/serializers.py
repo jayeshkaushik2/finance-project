@@ -72,7 +72,7 @@ class RegisterUserValidationSz(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs.get("password") != attrs.get("confirm_password"):
-            raise exceptions.ValidationError({"errors": "Passwords does not match."})
+            raise exceptions.ValidationError({"errors": ["Passwords does not match."]})
         return super().validate(attrs)
 
 
@@ -101,3 +101,13 @@ class UserDetailSz(serializers.ModelSerializer):
             "is_verified",
         )
         read_only_fields = ("email",)
+
+
+class VerifyOtpValidationSz(serializers.Serializer):
+    otp = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        otp = attrs.get("otp")
+        if len(otp) != 5:
+            raise exceptions.ValidationError({"errors": ["Invalid OTP"]})
+        return super().validate(attrs)
